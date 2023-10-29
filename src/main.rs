@@ -3,7 +3,6 @@ use serde_json;
 use screenshots::Screen;
 use std::io::prelude::*;
 use std::fs::File;
-use image::{GenericImageView, ImageError};
 use rdev::{simulate, EventType};
 
 mod convert;
@@ -15,26 +14,38 @@ struct Coordinates {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct Colors {
+    red: u8,
+    green: u8,
+    blue: u8,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct Config {
     coordinates: Coordinates,
     check_delay: u64,
     nexus_key: String,
+    target_colors: Colors,
 }
 
-fn main() -> Result<(), ImageError> {
+fn main() {
 
     // Read config.json
-    let mut file = File::open("config.json").expect("Impossible d'ouvrir le fichier");
+    let mut file = File::open("config.json").expect("Could not find config.json file");
     let mut contents = String::new();
-    file.read_to_string(&mut contents).expect("Impossible de lire le fichier");
+    file.read_to_string(&mut contents).expect("Could not open config.json file");
 
     // Deserialize the loaded json file
     let config: Config = serde_json::from_str(&contents).unwrap();
     let coordinates = config.coordinates;
     let check_delay = config.check_delay;
     let nexus_key = config.nexus_key;
+    let target_colors = config.target_colors;
     let key_press = EventType::KeyPress(convert::string_to_key(&nexus_key));
     let key_release = EventType::KeyRelease(convert::string_to_key(&nexus_key));
+    let red_target = target_colors.red;
+    let green_target = target_colors.green;
+    let blue_target = target_colors.blue;
 
     let bottom_left = coordinates.bottom_left;
     let top_right = coordinates.top_right;
@@ -47,18 +58,11 @@ fn main() -> Result<(), ImageError> {
         //////////////// GET SCREENSHOT ////////////////
 
         let image = screen.capture_area(bottom_left[0], bottom_left[1], width, height).unwrap();
-        image.save("cache/health.png").unwrap();
-
 
         //////////////// GET PIXEL COLOR ////////////////
 
-        // Load the image from file
-        let img = image::open("cache/health.png")?;
+        let pixel_color = image.get_pixel(0, 0);
 
-        // Get the color of a specific pixel (0, 0 in this example)
-        let pixel_color = img.get_pixel(0, 0);
-
-        // Extract the red value from the pixel color
         let red_value = pixel_color[0];
         let green_value = pixel_color[1];
         let blue_value = pixel_color[2];
@@ -66,13 +70,8 @@ fn main() -> Result<(), ImageError> {
         // Use the line below to check the target values
         //println!("{} ; {} ; {}", red_value, green_value, blue_value);
 
-        // Define all the threshold values
-        let red_target = 198;
-        let green_target = 50;
-        let blue_target = 54;
-
-        // Print the result
-        if red_value == red_target && green_value == green_target && blue_value == blue_target /*|| (pixel_color[0] > white_threshold && pixel_color[1] > white_threshold && pixel_color[2] > white_threshold)*/ {
+        // DO WE NEXUS? THAT IS THE QUESTION
+        if red_value == red_target && green_value == green_target && blue_value == blue_target {
             send(&key_press);
             send(&key_release);
             println!("Pressed the nexus key.");
@@ -81,8 +80,6 @@ fn main() -> Result<(), ImageError> {
 
         std::thread::sleep(std::time::Duration::from_millis(check_delay));
     }   
-
-    //Ok(())
 }
 
 fn send(event_type: &EventType) {
