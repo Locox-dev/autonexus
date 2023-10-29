@@ -60,13 +60,19 @@ fn main() -> Result<(), ImageError> {
 
         // Extract the red value from the pixel color
         let red_value = pixel_color[0];
+        let green_value = pixel_color[1];
+        let blue_value = pixel_color[2];
+
+        // Use the line below to check the target values
+        //println!("{} ; {} ; {}", red_value, green_value, blue_value);
 
         // Define all the threshold values
-        let red_threshold = 220;
-        //let white_threshold = 200;
+        let red_target = 198;
+        let green_target = 50;
+        let blue_target = 54;
 
         // Print the result
-        if red_value > red_threshold /*|| (pixel_color[0] > white_threshold && pixel_color[1] > white_threshold && pixel_color[2] > white_threshold)*/ {
+        if red_value == red_target && green_value == green_target && blue_value == blue_target /*|| (pixel_color[0] > white_threshold && pixel_color[1] > white_threshold && pixel_color[2] > white_threshold)*/ {
             send(&key_press);
             send(&key_release);
             println!("Pressed the nexus key.");

@@ -1,8 +1,8 @@
 {
     "coordinates": {
-        "bottom-left": [1608, 468],
-        "top-right": [1609, 467]
+        "bottom_left": [1573, 468],
+        "top_right": [1574, 467]
     },
-    "check-delay": 0,
-    "nexus-key": "KeyC"
+    "check_delay": 0,
+    "nexus_key": "KeyC"
 }
