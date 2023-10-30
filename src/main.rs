@@ -3,6 +3,7 @@ use serde_json;
 use screenshots::Screen;
 use std::io::prelude::*;
 use std::fs::File;
+use image::{GenericImageView, ImageError};
 use rdev::{simulate, EventType};
 
 mod convert;
@@ -28,7 +29,7 @@ struct Config {
     target_colors: Colors,
 }
 
-fn main() {
+fn main() -> Result<(), ImageError> {
 
     // Read config.json
     let mut file = File::open("config.json").expect("Could not find config.json file");
@@ -54,32 +55,61 @@ fn main() {
     
     let screen = Screen::from_point(0, 0).unwrap();
 
-    loop {
-        //////////////// GET SCREENSHOT ////////////////
-
-        let image = screen.capture_area(bottom_left[0], bottom_left[1], width, height).unwrap();
-
-        //////////////// GET PIXEL COLOR ////////////////
-
-        let pixel_color = image.get_pixel(0, 0);
-
-        let red_value = pixel_color[0];
-        let green_value = pixel_color[1];
-        let blue_value = pixel_color[2];
-
-        // Use the line below to check the target values
-        //println!("{} ; {} ; {}", red_value, green_value, blue_value);
-
-        // DO WE NEXUS? THAT IS THE QUESTION
-        if red_value == red_target && green_value == green_target && blue_value == blue_target {
-            send(&key_press);
-            send(&key_release);
-            println!("Pressed the nexus key.");
-            std::thread::sleep(std::time::Duration::from_secs(1));
+    if check_delay == 0{
+        loop {
+            //////////////// GET SCREENSHOT ////////////////
+    
+            let image = screen.capture_area(bottom_left[0], bottom_left[1], width, height).unwrap();
+            image.save("cache/health.png").unwrap();
+    
+            // Load the image from file
+            let img = image::open("cache/health.png")?;
+            let pixel_color = img.get_pixel(0, 0);
+    
+            let red_value = pixel_color[0];
+            let green_value = pixel_color[1];
+            let blue_value = pixel_color[2];
+    
+            // Use the line below to check the target values
+            //println!("{} ; {} ; {}", red_value, green_value, blue_value);
+    
+            // DO WE NEXUS? THAT IS THE QUESTION
+            if red_value == red_target && green_value == green_target && blue_value == blue_target {
+                send(&key_press);
+                send(&key_release);
+                println!("Pressed the nexus key.");
+                std::thread::sleep(std::time::Duration::from_secs(2));
+            }
         }
-
-        std::thread::sleep(std::time::Duration::from_millis(check_delay));
-    }   
+    } else {
+        loop {
+            //////////////// GET SCREENSHOT ////////////////
+    
+            let image = screen.capture_area(bottom_left[0], bottom_left[1], width, height).unwrap();
+            image.save("cache/health.png").unwrap();
+    
+            // Load the image from file
+            let img = image::open("cache/health.png")?;
+            let pixel_color = img.get_pixel(0, 0);
+    
+            let red_value = pixel_color[0];
+            let green_value = pixel_color[1];
+            let blue_value = pixel_color[2];
+    
+            // Use the line below to check the target values
+            //println!("{} ; {} ; {}", red_value, green_value, blue_value);
+    
+            // DO WE NEXUS? THAT IS THE QUESTION
+            if red_value == red_target && green_value == green_target && blue_value == blue_target {
+                send(&key_press);
+                send(&key_release);
+                println!("Pressed the nexus key.");
+                std::thread::sleep(std::time::Duration::from_secs(2));
+            }
+    
+            std::thread::sleep(std::time::Duration::from_millis(check_delay));
+        }
+    }
 }
 
 fn send(event_type: &EventType) {
